@@ -24,7 +24,6 @@ const esc = (s) =>
     (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[m],
   );
 
-// ---- UI ----
 function mascot(mood = "idle", cls = "") {
   const K = "#1a1405";
   const eyes = {
@@ -42,14 +41,15 @@ function mascot(mood = "idle", cls = "") {
   const tears =
     '<path class="tear" d="M33 60q-5 9 0 12q5-3 0-12z" fill="#5ac8fa"/><path class="tear t2" d="M67 60q-5 9 0 12q5-3 0-12z" fill="#5ac8fa"/>';
   return `<svg class="mascot ${mood} ${cls}" viewBox="0 0 100 100" aria-hidden="true">
-<g class="wing"><ellipse cx="30" cy="30" rx="15" ry="9" fill="#fff" opacity=".8" transform="rotate(-30 30 30)"/></g>
-<g class="wing"><ellipse cx="70" cy="30" rx="15" ry="9" fill="#fff" opacity=".8" transform="rotate(30 70 30)"/></g>
-<path d="M42 24Q38 10 30 8M58 24Q62 10 70 8" stroke="${K}" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="30" cy="8" r="3.5" fill="${K}"/><circle cx="70" cy="8" r="3.5" fill="${K}"/>
-<defs><clipPath id="bb"><ellipse cx="50" cy="58" rx="36" ry="32"/></clipPath></defs>
-<ellipse cx="50" cy="58" rx="36" ry="32" fill="#ffc800"/>
-<g clip-path="url(#bb)"><rect x="0" y="76" width="100" height="8" fill="${K}"/><rect x="0" y="90" width="100" height="10" fill="${K}"/></g>
-<ellipse cx="36" cy="38" rx="9" ry="4.5" fill="#fff" opacity=".35"/>
-${eyes[mood]}${mouth[mood]}${mood === "sad" ? tears : cheeks}</svg>`;
+    <g class="wing"><ellipse cx="30" cy="30" rx="15" ry="9" fill="#fff" opacity=".8" transform="rotate(-30 30 30)"/></g>
+    <g class="wing"><ellipse cx="70" cy="30" rx="15" ry="9" fill="#fff" opacity=".8" transform="rotate(30 70 30)"/></g>
+    <path d="M42 24Q38 10 30 8M58 24Q62 10 70 8" stroke="${K}" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="30" cy="8" r="3.5" fill="${K}"/><circle cx="70" cy="8" r="3.5" fill="${K}"/>
+    <defs><clipPath id="bb"><ellipse cx="50" cy="58" rx="36" ry="32"/></clipPath></defs>
+    <ellipse cx="50" cy="58" rx="36" ry="32" fill="#ffc800"/>
+    <g clip-path="url(#bb)"><rect x="0" y="76" width="100" height="8" fill="${K}"/><rect x="0" y="90" width="100" height="10" fill="${K}"/></g>
+    <ellipse cx="36" cy="38" rx="9" ry="4.5" fill="#fff" opacity=".35"/>
+    ${eyes[mood]}${mouth[mood]}${mood === "sad" ? tears : cheeks}</svg>`;
 }
 const MASCOT = mascot("idle");
 const BRAND = MASCOT + '<div class="logo">Quizzy</div>';
