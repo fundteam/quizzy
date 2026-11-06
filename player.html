@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="th">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quizzy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Mali:wght@600&family=Prompt:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="quizzy.css" />
+  <body class="p">
+    <div id="app"></div>
+    <script src="common.js"></script>
+    <script>
+      let S = { room: sessionStorage.room, pid: sessionStorage.pid },
+        st = {},
+        key = "",
+        t0 = 0,
+        sent = -1,
+        last = -1;
+      const show = (h) => ($("app").innerHTML = h);
+
+      let room0 = "";
+
+      // ขั้นที่ 1: ใส่รหัสห้อง
+      function join() {
+        show(`${BRAND}<div class="card"><small>ใส่รหัสห้อง</small>
+    <input id="c" class="ci" placeholder="0000" inputmode="numeric" maxlength="6">
+    <button class="full" onclick="chk()">ต่อไป</button><p id="e"></p></div>`);
+        $("c").onkeydown = (e) => {
+          if (e.key === "Enter") chk();
+        };
+        $("c").focus();
+      }
+
+      async function chk() {
+        const code = $("c").value.trim();
+        if (!code) return ($("e").textContent = "กรอกรหัสห้องก่อน");
+        try {
+          const r = await api(
+            "rooms?select=code&code=eq." + encodeURIComponent(code),
+          );
+          if (!r.length)
+            return ($("e").textContent = "ไม่พบห้องนี้ ลองเช็กรหัสอีกครั้ง");
+          room0 = code;
+          ask();
+        } catch (x) {
+          $("e").textContent = "ตรวจรหัสไม่ได้ ลองอีกครั้ง";
+        }
+      }
+
+      // ขั้นที่ 2: ใส่ชื่อ (ผ่านรหัสห้องแล้วเท่านั้น)
+      function ask() {
+        show(`${BRAND}<div class="card"><small>ห้อง ${esc(room0)}</small>
+    <input id="n" placeholder="ชื่อของคุณ" maxlength="20">
+    <button class="full" onclick="go()">เข้าห้อง</button>
+    <button class="link" onclick="join()">เปลี่ยนรหัสห้อง</button><p id="e"></p></div>`);
+        $("n").onkeydown = (e) => {
+          if (e.key === "Enter") go();
+        };
+        $("n").focus();
+      }
+
+      async function go() {
+        const name = $("n").value.trim();
+        if (!name) return ($("e").textContent = "ใส่ชื่อของคุณก่อน");
+        try {
+          const p = await api("players", {
+            method: "POST",
+            body: { room: room0, name },
+            prefer: "return=representation",
+          });
+          S = { room: room0, pid: p[0].id };
+          sessionStorage.room = room0;
+          sessionStorage.pid = p[0].id;
+          loop();
+        } catch (x) {
+          $("e").textContent = "เข้าห้องไม่ได้ ลองอีกครั้ง";
+        }
+      }
+
+      // ถามสถานะห้องทุก 1.5–3 วินาที (สุ่มเวลาเพื่อไม่ให้ 150 เครื่องยิงพร้อมกัน)
+      async function loop() {
+        show(MASCOT + "<h2>กำลังเข้าห้อง…</h2>");
+        for (;;) {
+          try {
+            const r = await api("rooms?select=state&code=eq." + S.room);
+            st = r[0]?.state || {};
+            await render();
+          } catch (x) {
+            key = "";
+          }
+          await sleep(1500 + Math.random() * 1500);
+        }
+      }
+
+      async function render() {
+        const k = [st.phase, st.qi, (st.winners || []).length].join();
+        if (k === key) return;
+        key = k;
+        if (st.phase === "q") {
+          t0 = Date.now();
+          show(`<div class="bar"><i style="animation-duration:${st.q.limit}s"></i></div><div class="card"><h2>${esc(st.q.text)}</h2></div>
+      <div id="opts">${st.q.opts.map((o, i) => `<button class="o${i}" data-s="${"▲◆●■"[i]}" onclick="pick(${i})">${esc(o)}</button>`).join("")}</div>`);
+        } else if (st.phase === "result") {
+          const p = await api("players?select=score&id=eq." + S.pid);
+          const answered = sent === st.qi,
+            ok = answered && last === st.ans;
+          if (ok) confetti(14);
+          show(`${mascot(ok ? "happy" : answered ? "sad" : "idle", "lg")}<h1>${ok ? "ถูกต้อง!" : answered ? "ยังไม่ถูก" : "ไม่ได้ตอบ"}</h1>
+      <div class="card"><small>คะแนนรวม</small><div class="big">${p[0]?.score ?? 0}</div></div>`);
+        } else if (st.phase === "end") {
+          const [t, me] = await Promise.all([
+            api(
+              `players?select=id,name,score&order=score.desc&limit=3&room=eq.${S.room}`,
+            ),
+            api("players?select=score&id=eq." + S.pid),
+          ]);
+          const score = me[0]?.score ?? 0;
+          const higher = await api(
+            `players?select=id&room=eq.${S.room}&score=gt.${score}`,
+          );
+          const rank = higher.length + 1;
+          confetti(rank === 1 ? 70 : 20);
+          show(`<div class="card tc">${mascot("happy", "lg")}<small>ผู้ชนะอันดับ 1</small><h1>👑 ${esc(t[0]?.name ?? "-")}</h1><div class="big">${t[0]?.score ?? 0}</div></div>
+      <div class="card"><b>🏆 3 อันดับแรก</b>${rankRows(t)}</div>
+      <div class="card tc"><small>${rank === 1 ? "คุณคือที่ 1!" : "อันดับของคุณ"}</small><div class="big">${rank}</div><small>${score} คะแนน</small></div>`);
+        } else if ((st.winners || []).includes(S.pid)) {
+          confetti(40);
+          show(mascot("happy", "lg") + "<h1>🎁 คุณถูกสุ่มได้รางวัล!</h1>");
+        } else {
+          show(
+            MASCOT +
+              "<h2>เข้าห้องแล้ว</h2><p>รอ host เริ่มเกม หรือรอลุ้นรางวัล</p>",
+          );
+        }
+      }
+
+      function pick(i) {
+        if (sent === st.qi) return;
+        sent = st.qi;
+        last = i;
+        const t = Date.now() - t0; // เวลาที่ใช้ตอบ นับในเครื่องผู้เล่นเอง
+        show(MASCOT + "<h2>ส่งคำตอบแล้ว</h2><p>รอเฉลย…</p>");
+        api("answers", {
+          method: "POST",
+          body: { room: S.room, qi: st.qi, pid: S.pid, choice: i, t },
+          prefer: "resolution=ignore-duplicates,return=minimal",
+        }).catch(() => {
+          sent = -1;
+          key = "";
+        });
+      }
+
+      S.room && S.pid ? loop() : join();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,543 @@
+:root {
+    --bg: #14100a;
+    --card: #221c0f;
+    --card2: #2d2511;
+    --line: #3b3218;
+    --cream: #fff4d1;
+    --mut: #b9a96e;
+    --hon: #ffc800;
+    --ink: #14100a;
+    --r: #ff5a5f;
+    --b: #3aa0ff;
+    --y: #ffc800;
+    --g: #2ed3a0
+}
+
+* {
+    box-sizing: border-box
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Prompt', system-ui, sans-serif;
+    color: var(--cream);
+    background: var(--bg);
+    overflow-x: hidden
+}
+
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none
+}
+
+body::before {
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50V16L28 0l28 16v34L28 66zm0 34L0 84V50m56 0v34L28 100' fill='none' stroke='%23ffc800' stroke-opacity='.08' stroke-width='2'/%3E%3C/svg%3E");
+    animation: hex 120s linear infinite
+}
+
+body::after {
+    background: radial-gradient(700px 420px at 50% -8%, #ffc8002e, transparent)
+}
+
+@keyframes hex {
+    to {
+        background-position: 56px 100px
+    }
+}
+
+#app {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 18px 16px
+}
+
+body.p {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center
+}
+
+body.p #app {
+    width: 100%;
+    max-width: 520px
+}
+
+h1 {
+    font-size: 1.6rem;
+    margin: .3em 0;
+    font-weight: 700
+}
+
+h2 {
+    font-size: 1.25rem;
+    margin: .3em 0;
+    font-weight: 600
+}
+
+small {
+    color: var(--mut)
+}
+
+.tc {
+    text-align: center
+}
+
+.logo {
+    font-family: 'Mali', 'Prompt', sans-serif;
+    font-weight: 600;
+    font-size: 2.1rem;
+    text-align: center;
+    color: var(--hon);
+    margin-bottom: 4px
+}
+
+.mascot {
+    width: 92px;
+    display: block;
+    margin: 0 auto 4px;
+    animation: float 3.5s ease-in-out infinite
+}
+
+.mascot.lg {
+    width: 130px
+}
+
+.mascot.happy {
+    animation: hop .7s ease-out 2
+}
+
+.mascot.sad {
+    animation: float 5s ease-in-out infinite
+}
+
+@keyframes float {
+    50% {
+        transform: translateY(-7px)
+    }
+}
+
+@keyframes hop {
+    40% {
+        transform: translateY(-20px) rotate(-5deg)
+    }
+
+    70% {
+        transform: translateY(0)
+    }
+}
+
+.mascot .wing {
+    transform-box: fill-box;
+    transform-origin: center bottom;
+    animation: flap 2.4s ease-in-out infinite
+}
+
+@keyframes flap {
+    50% {
+        transform: rotate(-10deg)
+    }
+}
+
+.tear {
+    animation: tear 1.4s ease-in infinite
+}
+
+.tear.t2 {
+    animation-delay: .5s
+}
+
+@keyframes tear {
+    from {
+        transform: translateY(-2px);
+        opacity: 1
+    }
+
+    to {
+        transform: translateY(14px);
+        opacity: 0
+    }
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--hon);
+    border-radius: 16px;
+    padding: 18px;
+    margin: 14px 0;
+    box-shadow: 0 12px 30px #0006;
+    animation: pop .4s cubic-bezier(.3, 1.4, .5, 1) both
+}
+
+@keyframes pop {
+    from {
+        transform: scale(.94) translateY(8px);
+        opacity: 0
+    }
+}
+
+input,
+textarea,
+select {
+    font: inherit;
+    color: var(--cream);
+    background: var(--bg);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    outline: 0;
+    transition: border-color .2s, box-shadow .2s
+}
+
+input,
+textarea {
+    width: 100%;
+    padding: 13px 15px;
+    margin: 6px 0
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--hon);
+    box-shadow: 0 0 0 4px #ffc80026
+}
+
+::placeholder {
+    color: #7c6e3d;
+    letter-spacing: 0
+}
+
+textarea {
+    height: 150px
+}
+
+select {
+    padding: 8px 10px
+}
+
+button {
+    font: inherit;
+    font-weight: 600;
+    padding: 13px 20px;
+    margin: 5px 5px 5px 0;
+    border: 0;
+    border-radius: 12px;
+    background: var(--hon);
+    color: var(--ink);
+    box-shadow: 0 5px 0 #a98100;
+    cursor: pointer;
+    transition: transform .08s, box-shadow .08s
+}
+
+button:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #a98100
+}
+
+button.sec {
+    background: var(--card2);
+    color: var(--hon);
+    border: 1.5px solid #5a4a14;
+    box-shadow: 0 5px 0 #0008
+}
+
+button.sec:active {
+    box-shadow: 0 1px 0 #0008
+}
+
+button.full {
+    width: 100%;
+    margin: 8px 0 0
+}
+
+button.link {
+    background: none;
+    box-shadow: none;
+    border: 0;
+    color: var(--mut);
+    padding: 8px;
+    font-weight: 400
+}
+
+button.link:active {
+    transform: none;
+    box-shadow: none
+}
+
+#opts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px
+}
+
+#opts button {
+    min-height: 116px;
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--ink);
+    position: relative;
+    animation: pop .4s both;
+    box-shadow: 0 6px 0 #0007
+}
+
+#opts button::before {
+    content: attr(data-s);
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    opacity: .5
+}
+
+#opts button:active {
+    transform: translateY(5px);
+    box-shadow: none
+}
+
+.o0 {
+    background: var(--r)
+}
+
+.o1 {
+    background: var(--b)
+}
+
+.o2 {
+    background: var(--y)
+}
+
+.o3 {
+    background: var(--g)
+}
+
+.bar {
+    height: 10px;
+    border-radius: 9px;
+    background: #ffffff1c;
+    overflow: hidden;
+    margin: 10px 0
+}
+
+.bar i {
+    display: block;
+    height: 100%;
+    width: 100%;
+    border-radius: 9px;
+    background: linear-gradient(90deg, var(--hon), var(--r));
+    animation: shrink linear forwards
+}
+
+@keyframes shrink {
+    to {
+        width: 0
+    }
+}
+
+.code {
+    font-size: 3.4rem;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-align: center;
+    color: var(--hon)
+}
+
+.n {
+    font-size: 2.1rem;
+    font-weight: 700;
+    text-align: center;
+    min-height: 1.2em
+}
+
+.big {
+    font-size: 3.2rem;
+    font-weight: 700;
+    margin: 6px 0;
+    color: var(--hon);
+    animation: pop .5s both;
+    font-variant-numeric: tabular-nums
+}
+
+.win {
+    animation: pop .5s both
+}
+
+.chip {
+    display: inline-block;
+    background: #3a2f0e;
+    color: var(--hon);
+    border-radius: 99px;
+    padding: 4px 12px;
+    margin: 3px
+}
+
+.row {
+    position: relative;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 12px;
+    margin: 7px 0;
+    border-radius: 12px;
+    background: var(--card2);
+    overflow: hidden;
+    text-align: left
+}
+
+.row::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: var(--w);
+    background: #5b4710;
+    border-radius: 12px;
+    animation: grow .8s cubic-bezier(.2, .8, .2, 1) both
+}
+
+.row.ok::before {
+    background: #17694f
+}
+
+.row>* {
+    position: relative
+}
+
+.row b {
+    flex: 1;
+    font-weight: 600
+}
+
+.row em {
+    font-style: normal;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums
+}
+
+@keyframes grow {
+    from {
+        width: 0
+    }
+}
+
+.cf {
+    position: fixed;
+    top: -14px;
+    width: 9px;
+    height: 14px;
+    border-radius: 2px;
+    z-index: 9;
+    animation: fall linear forwards;
+    pointer-events: none
+}
+
+@keyframes fall {
+    to {
+        transform: translate(var(--dx), 105vh) rotate(540deg);
+        opacity: .8
+    }
+}
+
+body.p input {
+    text-align: center
+}
+
+.ci {
+    font-size: 2.1rem;
+    font-weight: 700;
+    letter-spacing: .3em;
+    text-indent: .3em
+}
+
+.qh {
+    display: flex;
+    justify-content: space-between;
+    align-items: center
+}
+
+.ib {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    margin: 0 0 0 6px;
+    background: var(--card2);
+    color: var(--cream);
+    border: 1px solid var(--line);
+    box-shadow: 0 3px 0 #0008;
+    border-radius: 10px
+}
+
+.qt {
+    height: 84px;
+    font-size: 1.05rem;
+    font-weight: 600
+}
+
+.og {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 8px 0
+}
+
+.oc {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    border-radius: 14px
+}
+
+.oc input {
+    margin: 0;
+    padding: 10px;
+    min-width: 0;
+    border-color: transparent
+}
+
+.oc>span {
+    font-size: 1.2rem;
+    width: 20px;
+    text-align: center;
+    color: var(--ink);
+    opacity: .6
+}
+
+.ck {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    margin: 0;
+    border-radius: 50%;
+    background: #14100a33;
+    color: #14100a80;
+    box-shadow: none;
+    font-size: 1.1rem;
+    flex: none
+}
+
+.ck.on {
+    background: var(--ink);
+    color: var(--hon);
+    box-shadow: 0 0 0 3px #14100a55
+}
+
+@media(max-width:520px) {
+    .og {
+        grid-template-columns: 1fr
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+
+    *,
+    ::before,
+    ::after {
+        animation: none !important;
+        transition: none !important
+    }
+}

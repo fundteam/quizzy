@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="th">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quizzy Host</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Mali:wght@600&family=Prompt:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="quizzy.css" />
+  <body>
+    <div id="app"></div>
+    <script src="common.js"></script>
+    <script>
+      let Q = [],
+        room,
+        players = [],
+        winners = [],
+        ST = { phase: "lobby", winners: [] },
+        qi = -1,
+        skip = 0;
+
+      const rank = rankRows;
+
+      const SH = "▲◆●■";
+      const blank = () => ({
+        text: "",
+        opts: ["", "", "", ""],
+        ans: 0,
+        limit: 20,
+      });
+      let D = [];
+      try {
+        D = JSON.parse(localStorage.qz_draft || "[]");
+      } catch (x) {}
+      if (!D.length) D = [blank()];
+      const save = () => {
+        try {
+          localStorage.qz_draft = JSON.stringify(D);
+        } catch (x) {}
+      };
+
+      function setup() {
+        $("app").innerHTML = `${BRAND}
+  <div class="card tc"><b>🎁 ห้องจับสลาก</b><br><small>ไม่มีคำถาม แค่ให้คนเข้าห้องแล้วสุ่มชื่อรับรางวัล</small><br>
+    <button class="sec" onclick="create(true)">สร้างห้องจับสลาก</button></div>
+  <div id="qb"></div>
+  <div class="card tc"><button class="sec" onclick="D.push(blank());save();renderQB()">＋ เพิ่มคำถาม</button>
+    <button onclick="create()">▶️ สร้างห้องแข่งตอบคำถาม</button><p id="err"></p></div>`;
+        renderQB();
+      }
+
+      function renderQB() {
+        $("qb").innerHTML = D.map(
+          (q, i) => `<div class="card">
+    <div class="qh"><b>ข้อ ${i + 1}</b><span>
+      <button class="ib" onclick="mv(${i},-1)" title="เลื่อนขึ้น">↑</button><button class="ib" onclick="mv(${i},1)" title="เลื่อนลง">↓</button><button class="ib" onclick="cp(${i})" title="ทำสำเนา">⧉</button><button class="ib" onclick="rm(${i})" title="ลบ">🗑</button></span></div>
+    <textarea class="qt" placeholder="พิมพ์คำถามที่นี่" oninput="D[${i}].text=this.value;save()">${esc(q.text)}</textarea>
+    <div class="og">${q.opts.map((o, j) => `<div class="oc o${j}"><span>${SH[j]}</span><input value="${esc(o)}" placeholder="ตัวเลือก ${j + 1}" oninput="D[${i}].opts[${j}]=this.value;save()"><button class="ck${q.ans === j ? " on" : ""}" onclick="D[${i}].ans=${j};save();renderQB()" title="ข้อนี้คือคำตอบที่ถูก">✓</button></div>`).join("")}</div>
+    <small>กด ✓ ที่ตัวเลือกที่ถูก · เว้นว่างได้ถ้าใช้ไม่ครบ 4 ข้อ</small><br>
+    เวลา <select onchange="D[${i}].limit=+this.value;save()">${[10, 20, 30, 60].map((s) => `<option value="${s}"${q.limit === s ? " selected" : ""}>${s} วินาที</option>`).join("")}</select></div>`,
+        ).join("");
+      }
+      function mv(i, d) {
+        const j = i + d;
+        if (j < 0 || j >= D.length) return;
+        [D[i], D[j]] = [D[j], D[i]];
+        save();
+        renderQB();
+      }
+      function cp(i) {
+        D.splice(i + 1, 0, JSON.parse(JSON.stringify(D[i])));
+        save();
+        renderQB();
+      }
+      function rm(i) {
+        if (D[i].text && !confirm("ลบข้อนี้?")) return;
+        D.splice(i, 1);
+        if (!D.length) D.push(blank());
+        save();
+        renderQB();
+      }
+
+      async function setState(p) {
+        Object.assign(ST, p);
+        await api("rooms?on_conflict=code", {
+          method: "POST",
+          body: { code: room, state: ST },
+          prefer: "resolution=merge-duplicates,return=minimal",
+        });
+      }
+      async function loadPlayers() {
+        players = await api("players?select=id,name,score&room=eq." + room);
+        return players;
+      }
+
+      async function create(drawOnly) {
+        Q = drawOnly
+          ? []
+          : D.map((q) => {
+              const ix = [0, 1, 2, 3].filter((j) => q.opts[j].trim());
+              return {
+                text: q.text.trim(),
+                opts: ix.map((j) => q.opts[j].trim()),
+                ans: ix.indexOf(q.ans),
+                limit: q.limit,
+              };
+            });
+        const bad = Q.findIndex(
+          (q) => !q.text || q.opts.length < 2 || q.ans < 0,
+        );
+        if (bad >= 0)
+          return ($("err").textContent =
+            `ข้อ ${bad + 1} ยังไม่สมบูรณ์: ต้องมีคำถาม ตัวเลือกอย่างน้อย 2 ข้อ และกดเลือกคำตอบที่ถูก (✓)`);
+        do {
+          room = String((1000 + Math.random() * 9000) | 0);
+        } while ((await api("rooms?select=code&code=eq." + room)).length);
+        await setState({});
+        navigator.wakeLock?.request("screen").catch(() => {}); // กันจอ host ดับ
+        lobby();
+        pollPlayers();
+      }
+
+      function lobby() {
+        $("app").innerHTML =
+          `<div class="card tc">${MASCOT}<small>รหัสห้อง (ผู้เล่นเปิด player.html)</small><div class="code">${room}</div><div class="n"><span id="cnt">0</span> คน</div></div>
+  <div class="card" id="ctl">${Q.length ? `<button id="sb" onclick="nextQ()">▶️ เริ่มเกม (${Q.length} ข้อ)</button>` : ""}<button class="sec" onclick="draw()">🎁 สุ่มชื่อ</button>
+    <div class="n" id="dw"></div><div id="wl" class="tc"></div></div>
+  <div id="main"></div><div class="card"><small id="nm"></small></div>`;
+      }
+
+      async function pollPlayers() {
+        for (;;) {
+          try {
+            await loadPlayers();
+            $("cnt").textContent = players.length;
+            $("nm").textContent = players.map((p) => p.name).join(" · ");
+          } catch (x) {}
+          await sleep(3000);
+        }
+      }
+
+      async function draw() {
+        await loadPlayers();
+        const pool = players.filter((p) => !winners.includes(p.id));
+        if (!pool.length) return alert("ไม่มีรายชื่อให้สุ่มแล้ว");
+        const w = pool[(Math.random() * pool.length) | 0],
+          d = $("dw");
+        d.classList.remove("win");
+        for (let i = 0; i < 25; i++) {
+          d.textContent = pool[(Math.random() * pool.length) | 0].name;
+          await sleep(60 + i * 12);
+        }
+        d.textContent = "🎉 " + w.name;
+        void d.offsetWidth;
+        d.classList.add("win");
+        confetti(30);
+        winners.push(w.id);
+        $("wl").insertAdjacentHTML(
+          "beforeend",
+          '<span class="chip">' + esc(w.name) + "</span>",
+        );
+        await setState({ winners: [...winners] });
+      }
+
+      async function nextQ() {
+        $("sb")?.remove();
+        $("ctl").style.display = "none";
+        if (++qi >= Q.length) return fin();
+        const q = Q[qi];
+        skip = 0;
+        await setState({
+          phase: "q",
+          qi,
+          q: { text: q.text, opts: q.opts, limit: q.limit },
+          ans: null,
+        }); // ไม่ส่งเฉลยไปให้ผู้เล่น
+        $("main").innerHTML =
+          `<div class="card"><b>ข้อ ${qi + 1}/${Q.length}</b><h2>${esc(q.text)}</h2>
+    <div class="bar"><i style="animation-duration:${q.limit}s"></i></div>
+    <div class="n">⏱ <span id="tl"></span></div><div class="tc">ตอบแล้ว <span id="an">0</span>/${players.length}</div>
+    <button class="sec" onclick="skip=1">เฉลยเลย</button></div>`;
+        const end = Date.now() + (q.limit + 4) * 1000; // เผื่อ 4 วินาทีให้เครื่องผู้เล่นที่ช้า
+        while (Date.now() < end && !skip) {
+          $("tl").textContent = Math.max(
+            0,
+            Math.ceil((end - Date.now()) / 1000) - 4,
+          );
+          try {
+            $("an").textContent = (
+              await api(`answers?select=pid&room=eq.${room}&qi=eq.${qi}`)
+            ).length;
+          } catch (x) {}
+          await sleep(1000);
+        }
+        reveal();
+      }
+
+      async function reveal() {
+        const q = Q[qi];
+        const a = await api(
+          `answers?select=pid,choice,t&room=eq.${room}&qi=eq.${qi}`,
+        );
+        const list = await loadPlayers(),
+          m = {};
+        a.forEach((x) => (m[x.pid] = x));
+        list.forEach((p) => {
+          const x = m[p.id];
+          if (x && x.choice === q.ans)
+            p.score += Math.round(
+              1000 * (1 - Math.min(x.t / 1000 / q.limit, 1) / 2),
+            );
+        });
+        if (list.length)
+          await api("players?on_conflict=id", {
+            method: "POST",
+            body: list.map((p) => ({
+              id: p.id,
+              room,
+              name: p.name,
+              score: p.score,
+            })),
+            prefer: "resolution=merge-duplicates,return=minimal",
+          });
+        await setState({ phase: "result", ans: q.ans });
+        const cnt = q.opts.map(
+          (_, i) => a.filter((x) => x.choice === i).length,
+        );
+        const top = [...list].sort((x, y) => y.score - x.score).slice(0, 5);
+        $("main").innerHTML =
+          `<div class="card"><h2>${esc(q.text)}</h2>${q.opts.map((o, i) => `<div class="row${i === q.ans ? " ok" : ""}" style="--w:${(cnt[i] / Math.max(1, a.length)) * 100}%"><span>${i === q.ans ? "✅" : "▲◆●■"[i]}</span><b>${esc(o)}</b><em>${cnt[i]}</em></div>`).join("")}</div>
+    <div class="card"><b>🏆 อันดับ</b>${rank(top)}
+    <button onclick="nextQ()">${qi + 1 < Q.length ? "ข้อต่อไป ▶️" : "จบเกม 🏁"}</button></div>`;
+      }
+
+      async function fin() {
+        await loadPlayers();
+        await setState({ phase: "end" });
+        players.sort((a, b) => b.score - a.score);
+        confetti();
+        $("main").innerHTML =
+          `<div class="card"><h2>🏁 สรุปคะแนน</h2>${rank(players.slice(0, 10))}
+    <button onclick="csv()">⬇️ ดาวน์โหลด CSV</button></div>`;
+        $("ctl").style.display = "";
+      }
+
+      function csv() {
+        const t =
+          "\ufeffอันดับ,ชื่อ,คะแนน\n" +
+          players
+            .map(
+              (p, i) => `${i + 1},"${p.name.replace(/"/g, '""')}",${p.score}`,
+            )
+            .join("\n");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([t], { type: "text/csv" }));
+        a.download = "scores.csv";
+        a.click();
+      }
+
+      setup();
+    </script>
+  </body>
+</html>
