@@ -801,59 +801,48 @@ body.p:has(.draw-app) #app {
 
 .selected-ball.traveling {
   display: grid;
-  animation: winnerBallPop 2s cubic-bezier(.2, .75, .25, 1) forwards
+  animation: winnerBallSmoothPop 2.2s cubic-bezier(0.075, 0.485, 0.32, 0.215) forwards;
+}
+
+@keyframes winnerBallSmoothPop {
+  0% {
+    transform: translate(-50%, calc(-50% + 50px)) scale(0.3);
+    opacity: 0;
+  }
+
+  60% {
+    transform: translate(-50%, calc(-50% - 10px)) scale(1.08);
+    opacity: 1;
+  }
+
+  80% {
+    transform: translate(-50%, calc(-50% + 4px)) scale(0.95);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
 }
 
 .selected-ball.revealed {
   display: grid;
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
-  animation: winnerBallBounce .55s ease-out
-}
-
-@keyframes winnerBallPop {
-  0% {
-    transform: translate(-50%, -50%) translateY(-23vh) scale(.28);
-    opacity: 0
-  }
-
-  22% {
-    transform: translate(-50%, -50%) translateY(17vh) scale(.42);
-    opacity: 1
-  }
-
-  45% {
-    transform: translate(-50%, -50%) translateY(7vh) scale(.55);
-    opacity: 1
-  }
-
-  72% {
-    transform: translate(-50%, -50%) translateY(-2vh) scale(1.12);
-    opacity: 1
-  }
-
-  86% {
-    transform: translate(-50%, -50%) scale(.94);
-    opacity: 1
-  }
-
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1
-  }
+  animation: winnerBallBounce 0.55s ease-out forwards;
 }
 
 @keyframes winnerBallBounce {
   0% {
-    transform: translate(-50%, -50%) scale(.86)
+    transform: translate(-50%, -50%) scale(1);
   }
 
-  65% {
-    transform: translate(-50%, -50%) scale(1.08)
+  50% {
+    transform: translate(-50%, -50%) scale(1.08);
   }
 
   100% {
-    transform: translate(-50%, -50%) scale(1)
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 

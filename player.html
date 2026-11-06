@@ -364,7 +364,11 @@
         const status = $("machineStatus"),
           selected = $("selectedBall"),
           name = $("selectedBallName");
-        const winner = draw.name || "ผู้โชคดี";
+
+        // เช็กว่าผู้ชนะคือผู้เล่นเครื่องนี้หรือไม่
+        const isMe = draw.id === S.pid;
+        const winner = isMe ? `${draw.name} (คุณ!)` : draw.name || "ผู้โชคดี";
+
         status.textContent = "ลูกบอลกำลังถูกคนช้า ๆ ในโถ…";
         stage.classList.remove("is-drawing", "winner-revealed");
         selected.classList.remove("traveling", "revealed");
@@ -383,8 +387,15 @@
         selected.classList.remove("traveling");
         selected.classList.add("revealed");
         stage.classList.add("winner-revealed");
-        status.textContent = "🎉 ขอแสดงความยินดีกับผู้โชคดี!";
-        confetti(42);
+
+        // ปรับเปลี่ยนข้อความสถานะตอนจับเสร็จสิ้น
+        if (isMe) {
+          status.textContent = "🎉 ยินดีด้วย! คุณคือผู้โชคดีที่ได้รับรางวัล!";
+          confetti(80); // จุดพลุฉลองเพิ่มขึ้นสำหรับคนชนะ
+        } else {
+          status.textContent = `🎉 ขอแสดงความยินดีกับคุณ ${esc(draw.name)}!`;
+          confetti(42);
+        }
       }
 
       function askHome() {
